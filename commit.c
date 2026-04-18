@@ -164,18 +164,18 @@ int head_update(const ObjectID *new_commit) {
 
     char tmp_path[528];
     snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", target_path);
-    
+
     f = fopen(tmp_path, "w");
     if (!f) return -1;
-    
+
     char hex[HASH_HEX_SIZE + 1];
     hash_to_hex(new_commit, hex);
     fprintf(f, "%s\n", hex);
-    
+
     fflush(f);
     fsync(fileno(f));
     fclose(f);
-    
+
     return rename(tmp_path, target_path);
 }
 
@@ -243,8 +243,8 @@ int commit_create(const char *message, ObjectID *commit_id_out) {
     // 8. Update HEAD (branch ref) to point to the new commit
     if (head_update(&commit_id) != 0) {
         fprintf(stderr, "error: failed to update HEAD\n");
-    return -1;
-}
+        return -1;
+    }
 
     // 9. Return the commit hash
     *commit_id_out = commit_id;

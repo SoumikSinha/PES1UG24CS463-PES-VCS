@@ -144,7 +144,7 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     // 7. Atomically rename temp file to final path
     if (rename(tmp_path, path) != 0) {
         unlink(tmp_path);
-    return -1;
+        return -1;
     }
 
     // 8. fsync the shard directory to persist the rename
@@ -162,25 +162,13 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 // Read an object from the store.
 //
 // Steps:
-//   1. Build the file path from the hash using object_path()
-//   2. Open and read the entire file
-//   3. Parse the header to extract the type string and size
-//   4. Verify integrity: recompute the SHA-256 of the file contents
-//      and compare to the expected hash (from *id). Return -1 if mismatch.
-//   5. Set *type_out to the parsed ObjectType
-//   6. Allocate a buffer, copy the data portion (after the \0), set *data_out and *len_out
+//   1. Build the file path
+//   2. Read entire file into memory
+//   3. Verify integrity by recomputing hash
+//   4. Parse header (type + size)
+//   5. Return data portion
 //
-// HINTS - Useful syscalls and functions for this phase:
-//   - object_path        : getting the target file path
-//   - fopen, fread, fseek: reading the file into memory
-//   - memchr             : safely finding the '\0' separating header and data
-//   - strncmp            : parsing the type string ("blob", "tree", "commit")
-//   - compute_hash       : re-hashing the read data for integrity verification
-//   - memcmp             : comparing the computed hash against the requested hash
-//   - malloc, memcpy     : allocating and returning the extracted data
-//
-// The caller is responsible for calling free(*data_out).
-// Returns 0 on success, -1 on error (file not found, corrupt, etc.).
+// Returns 0 on success, -1 on error.
 int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_t *len_out) {
     // 1. Get path
     char path[512];
@@ -210,7 +198,7 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
         fprintf(stderr, "error: object integrity check failed\n");
         free(buf);
-    return -1;
+        return -1;
     }
 
     // 4. Parse header: find the '\0' separator
