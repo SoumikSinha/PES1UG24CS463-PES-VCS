@@ -18,7 +18,8 @@ pes: $(OBJS)
 test_objects: test_objects.o object.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-test_tree: test_tree.o object.o tree.o
+# Added index.o here to fix the linker error
+test_tree: test_tree.o object.o tree.o index.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 # ─── Convenience targets ────────────────────────────────────────────────────
