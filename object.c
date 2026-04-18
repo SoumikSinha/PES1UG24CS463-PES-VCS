@@ -238,3 +238,5 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     *len_out  = data_len;
     return 0;
 }
+
+// Final check for Phase 1 completion.
