@@ -14,16 +14,16 @@
 // PROVIDED functions: commit_parse, commit_serialize, commit_walk, head_read, head_update
 // TODO functions:     commit_create
 
+#include "pes.h"
 #include "commit.h"
-#include "index.h"
 #include "tree.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
-#include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
+#include <inttypes.h>
 
 // Forward declarations (implemented in object.c)
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
