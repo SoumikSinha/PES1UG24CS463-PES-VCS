@@ -66,24 +66,46 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
     return 0;
 }
 
-// ─── TODO: Implement these ──────────────────────────────────────────────────
+static int write_tree_for_range(IndexEntry *entries, int start, int end, const char *prefix, ObjectID *id_out) {
+    Tree tree; tree.count = 0;
+    size_t plen = strlen(prefix);
+    int i = start;
+    while (i < end) {
+        const char *rel = (plen == 0) ? entries[i].path : entries[i].path + plen + 1;
+        const char *slash = strchr(rel, '/');
+        if (!slash) {
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = entries[i].mode; te->hash = entries[i].hash;
+            strncpy(te->name, rel, 255); i++;
+        } else {
+            char dir_name[256]; size_t dir_len = slash - rel;
+            strncpy(dir_name, rel, dir_len); dir_name[dir_len] = '\0';
+            char sub_prefix[512];
+            if (plen == 0) sprintf(sub_prefix, "%s", dir_name);
+            else sprintf(sub_prefix, "%s/%s", prefix, dir_name);
+            int j = i;
+            while (j < end && strncmp(entries[j].path, sub_prefix, strlen(sub_prefix)) == 0) j++;
+            ObjectID sub_id;
+            write_tree_for_range(entries, i, j, sub_prefix, &sub_id);
+            TreeEntry *te = &tree.entries[tree.count++];
+            te->mode = MODE_DIR; te->hash = sub_id; strncpy(te->name, dir_name, 255);
+            i = j;
+        }
+    }
+    void *data; size_t len;
+    tree_serialize(&tree, &data, &len);
+    object_write(OBJ_TREE, data, len, id_out);
+    free(data);
+    return 0;
+}
 
-// Build a tree hierarchy from the current index and write all tree
-// objects to the object store.
-//
-// HINTS - Useful functions and concepts for this phase:
-//   - index_load      : load the staged files into memory
-//   - strchr          : find the first '/' in a path to separate directories from files
-//   - strncmp         : compare prefixes to group files belonging to the same subdirectory
-//   - Recursion       : you will likely want to create a recursive helper function 
-//                       (e.g., `write_tree_level(entries, count, depth)`) to handle nested dirs.
-//   - tree_serialize  : convert your populated Tree struct into a binary buffer
-//   - object_write    : save that binary buffer to the store as OBJ_TREE
-//
-// Returns 0 on success, -1 on error.
 int tree_from_index(ObjectID *id_out) {
-    // TODO: Implement recursive tree building
-    // (See Lab Appendix for logical steps)
-    (void)id_out;
+    Index *index = malloc(sizeof(Index));
+    if (!index || index_load(index) != 0) {
+        if (index) free(index);
     return -1;
+    }
+    int rc = write_tree_for_range(index->entries, 0, index->count, "", id_out);
+    free(index);
+    return rc;
 }
