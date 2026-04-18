@@ -379,7 +379,9 @@ The test program verifies:
 <img width="602" height="185" alt="image" src="https://github.com/user-attachments/assets/26c25700-074e-405c-bcdc-bda9a4b56f45" />
 
 
+
 **📸 Screenshot 1B:** `find .pes/objects -type f` showing the sharded directory structure.
+
 <img width="602" height="78" alt="image" src="https://github.com/user-attachments/assets/67c45a5c-f00b-4786-8253-ee594fe57593" />
 
 ---
@@ -411,12 +413,15 @@ The test program verifies:
 - Deterministic serialization (same entries in any order → identical output)
 
 **📸 Screenshot 2A:** Output of `./test_tree` showing all tests passing.
+
 <img width="342" height="124" alt="image" src="https://github.com/user-attachments/assets/bcbc334d-2498-4fc1-bb2d-681567d009d5" />
 
 
 
 **📸 Screenshot 2B:** Pick a tree object from `find .pes/objects -type f` and run `xxd .pes/objects/XX/YYY... | head -20` to show the raw binary format.
+
 <img width="602" height="157" alt="image" src="https://github.com/user-attachments/assets/f7ca47fa-0690-4ad8-a5f6-9674eb9ee14a" />
+
 
 
 ---
@@ -474,11 +479,15 @@ cat .pes/index    # Human-readable text format
 ```
 
 **📸 Screenshot 3A:** Run `./pes init`, `./pes add file1.txt file2.txt`, `./pes status` — show the output.
+
 <img width="548" height="806" alt="image" src="https://github.com/user-attachments/assets/f40035d7-93d7-4390-9896-2664d9c6f936" />
 
 
+
 **📸 Screenshot 3B:** `cat .pes/index` showing the text-format index with your entries.
+
 <img width="602" height="68" alt="image" src="https://github.com/user-attachments/assets/8f02aab7-e2d9-4433-9d72-cac8d1612eba" />
+
 
 ---
 
@@ -528,14 +537,26 @@ make test-integration
 ```
 
 **📸 Screenshot 4A:** Output of `./pes log` showing three commits with hashes, authors, timestamps, and messages.
+
 <img width="922" height="1048" alt="image" src="https://github.com/user-attachments/assets/e6515961-664d-4ba2-b725-ce1a21f8f6d1" />
 
 
+
 **📸 Screenshot 4B:** `find .pes -type f | sort` showing object store growth after three commits.
+
 <img width="602" height="285" alt="image" src="https://github.com/user-attachments/assets/0b99944d-bc2e-4ea6-b028-d804083f8ad4" />
 
+
+
 **📸 Screenshot 4C:** `cat .pes/refs/heads/main` and `cat .pes/HEAD` showing the reference chain.
+
 <img width="527" height="126" alt="image" src="https://github.com/user-attachments/assets/1da0223f-fd88-4311-b2ba-9c1eca8f3323" />
+
+
+
+<img width="602" height="767" alt="image" src="https://github.com/user-attachments/assets/b607ec0c-cdd2-4ba3-af97-a244cb40f32d" />
+
+
 
 ---
 
