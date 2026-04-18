@@ -12,11 +12,11 @@
 #define MAX_INDEX_ENTRIES 10000
 
 typedef struct {
-    uint32_t mode;          // File mode (100644, 100755, etc.)
-    ObjectID hash;          // SHA-256 of the staged blob
-    uint64_t mtime_sec;     // Last modification time (seconds since epoch)
-    uint32_t size;          // File size in bytes at time of staging
-    char path[512];         // Relative path from repo root (e.g., "src/main.c")
+    uint32_t mode;      // File mode (100644, 100755, etc.)
+    ObjectID hash;      // SHA-256 of the staged blob
+    uint64_t mtime_sec; // Last modification time (seconds since epoch)
+    uint32_t size;      // File size in bytes at time of staging
+    char path[512];     // Relative path from repo root (e.g., "src/main.c")
 } IndexEntry;
 
 typedef struct {
@@ -41,16 +41,6 @@ int index_remove(Index *index, const char *path);
 IndexEntry* index_find(Index *index, const char *path);
 
 // Print the status of the working directory compared to the index and HEAD.
-// Output format:
-//   Staged changes:
-//     staged:     <path>
-//
-//   Unstaged changes:
-//     modified:   <path>
-//     deleted:    <path>
-//
-//   Untracked files:
-//     untracked:  <path>
 int index_status(const Index *index);
 
 #endif // INDEX_H
