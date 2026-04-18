@@ -111,6 +111,7 @@ int index_load(Index *index) {
         hex_to_hash(hex, &e->hash);
         e->mtime_sec = (uint64_t)mtime;
         e->size = (uint32_t)size;
+        // Ensuring null-termination of path strings to prevent buffer overruns
         strncpy(e->path, path, sizeof(e->path) - 1);
         e->path[sizeof(e->path) - 1] = '\0';
     }
