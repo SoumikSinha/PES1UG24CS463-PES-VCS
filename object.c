@@ -55,43 +55,108 @@ int object_exists(const ObjectID *id) {
     return access(path, F_OK) == 0;
 }
 
-// ─── TODO: Implement these ──────────────────────────────────────────────────
+// ─── IMPLEMENTATION ──────────────────────────────────────────────────────────
 
 // Write an object to the store.
 //
 // Object format on disk:
 //   "<type> <size>\0<data>"
-//   where <type> is "blob", "tree", or "commit"
-//   and <size> is the decimal string of the data length
 //
 // Steps:
-//   1. Build the full object: header ("blob 16\0") + data
-//   2. Compute SHA-256 hash of the FULL object (header + data)
-//   3. Check if object already exists (deduplication) — if so, just return success
-//   4. Create shard directory (.pes/objects/XX/) if it doesn't exist
-//   5. Write to a temporary file in the same shard directory
-//   6. fsync() the temporary file to ensure data reaches disk
-//   7. rename() the temp file to the final path (atomic on POSIX)
-//   8. Open and fsync() the shard directory to persist the rename
-//   9. Store the computed hash in *id_out
-
-// HINTS - Useful syscalls and functions for this phase:
-//   - sprintf / snprintf : formatting the header string
-//   - compute_hash       : hashing the combined header + data
-//   - object_exists      : checking for deduplication
-//   - mkdir              : creating the shard directory (use mode 0755)
-//   - open, write, close : creating and writing to the temp file
-//                          (Use O_CREAT | O_WRONLY | O_TRUNC, mode 0644)
-//   - fsync              : flushing the file descriptor to disk
-//   - rename             : atomically moving the temp file to the final path
-//
-
+//   1. Build the full object: header + data
+//   2. Compute SHA-256 hash of the FULL object
+//   3. Check for deduplication
+//   4. Create shard directory
+//   5. Write to temp file
+//   6. fsync + rename (atomic)
+//   7. fsync directory
 //
 // Returns 0 on success, -1 on error.
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out) {
-    // TODO: Implement
-    (void)type; (void)data; (void)len; (void)id_out;
+    // 1. Build header string
+    const char *type_str;
+    switch (type) {
+        case OBJ_BLOB:   type_str = "blob";   break;
+        case OBJ_TREE:   type_str = "tree";   break;
+        case OBJ_COMMIT: type_str = "commit"; break;
+        default: return -1;
+    }
+
+    char header[64];
+    int hlen = snprintf(header, sizeof(header), "%s %zu", type_str, len);
+
+    // Full object = header + '\0' + data
+    size_t total = (size_t)hlen + 1 + len;
+    uint8_t *full = malloc(total);
+    if (!full) return -1;
+
+    memcpy(full, header, hlen);
+    full[hlen] = '\0';
+    memcpy(full + hlen + 1, data, len);
+
+    // 2. Compute hash of full object
+    ObjectID id;
+    compute_hash(full, total, &id);
+
+    // 3. Deduplication: if already stored, just return the hash
+    if (object_exists(&id)) {
+        *id_out = id;
+        free(full);
+        return 0;
+    }
+
+    // 4. Build shard path and create shard directory
+    char path[512];
+    object_path(&id, path, sizeof(path));
+
+    char dir[512];
+    snprintf(dir, sizeof(dir), "%s", path);
+    char *slash = strrchr(dir, '/');
+    if (!slash) { free(full); return -1; }
+    *slash = '\0';
+    mkdir(dir, 0755); // OK if it already exists
+
+    // 5. Write to a temporary file in the shard directory
+    char tmp_path[512];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp.XXXXXX", path);
+    // Use a deterministic temp name to avoid needing mkstemp portability issues
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", path);
+
+    int fd = open(tmp_path, O_CREAT | O_WRONLY | O_TRUNC, 0444);
+    if (fd < 0) { free(full); return -1; }
+
+    ssize_t written = write(fd, full, total);
+    free(full);
+    if (written != (ssize_t)total) {
+        close(fd);
+        unlink(tmp_path);
+        return -1;
+    }
+
+    // 6. fsync the temp file to ensure data reaches disk
+    if (fsync(fd) != 0) {
+        close(fd);
+        unlink(tmp_path);
+        return -1;
+    }
+    close(fd);
+
+    // 7. Atomically rename temp file to final path
+    if (rename(tmp_path, path) != 0) {
+        unlink(tmp_path);
     return -1;
+    }
+
+    // 8. fsync the shard directory to persist the rename
+    int dir_fd = open(dir, O_RDONLY);
+    if (dir_fd >= 0) {
+        fsync(dir_fd);
+        close(dir_fd);
+    }
+
+    // 9. Return the computed hash
+    *id_out = id;
+    return 0;
 }
 
 // Read an object from the store.
