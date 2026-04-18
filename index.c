@@ -167,6 +167,7 @@ int index_add(Index *index, const char *path) {
     IndexEntry *entry = index_find(index, path);
     if (!entry) entry = &index->entries[index->count++];
 
+    // Mapping filesystem permissions to internal VCS file modes (executable vs regular)
     entry->mode = (st.st_mode & S_IXUSR) ? 0100755 : 0100644;
     entry->hash = blob_id;
     entry->mtime_sec = (uint64_t)st.st_mtime;
