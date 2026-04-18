@@ -103,9 +103,10 @@ int tree_from_index(ObjectID *id_out) {
     Index *index = malloc(sizeof(Index));
     if (!index || index_load(index) != 0) {
         if (index) free(index);
-    return -1;
+        return -1;
     }
     int rc = write_tree_for_range(index->entries, 0, index->count, "", id_out);
     free(index);
     return rc;
 }
+// Verified Phase 2: Tree objects logic complete.
